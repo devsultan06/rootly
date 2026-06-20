@@ -76,7 +76,7 @@ export default function ForgotPasswordPage() {
       {/* Center Form Container */}
       <div className="flex-1 flex items-center justify-center relative z-10 py-16 px-4">
         <div className="w-full max-w-[400px]">
-          <div className="bg-[#111111] border border-white/5 rounded-xl p-8 shadow-2xl">
+          <div className="bg-[#111111] border border-white/5 rounded-xl p-8 ">
             {successMessage ? (
               <div className="text-center py-6">
                 <div className="w-16 h-16 bg-[#14B8A6]/10 border border-[#14B8A6]/20 rounded-full flex items-center justify-center mx-auto mb-6 text-[#14B8A6] animate-pulse">
