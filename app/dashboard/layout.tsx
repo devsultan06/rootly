@@ -19,6 +19,11 @@ const NAV_ITEMS = [
     icon: DashboardIcons.folder,
   },
   {
+    label: "Reports",
+    href: "/dashboard/reports",
+    icon: DashboardIcons.reports,
+  },
+  {
     label: "Integrations",
     href: "/dashboard/integrations",
     icon: DashboardIcons.integrations,

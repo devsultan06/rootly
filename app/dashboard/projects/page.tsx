@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { DashboardIcons } from "../components/DashboardIcons";
 
 /* ──────────────────────────────────────────────
-   MOCK DATA
+   TYPES & MOCK DATA
    ────────────────────────────────────────────── */
 type Project = {
   id: string;
@@ -119,16 +119,284 @@ const progressColor = {
 };
 
 /* ──────────────────────────────────────────────
-   PROJECTS PAGE
+   PROJECT DETAIL SPECIFIC MOCK DATA
+   ────────────────────────────────────────────── */
+type ProjectDetail = {
+  stack: string;
+  failedDeploys: number;
+  openTickets: number;
+  openPRs: number;
+  blockedCount: number;
+  jiraTickets: {
+    id: string;
+    title: string;
+    status: "Doing" | "Review" | "Blocked" | "Done";
+    tab: "in_progress" | "review" | "blocked";
+  }[];
+  commits: {
+    message: string;
+    author: string;
+    time: string;
+    hash: string;
+  }[];
+};
+
+const PROJECT_DETAILS: Record<string, ProjectDetail> = {
+  // Auth Service Migration
+  "3": {
+    stack: "Node.js · Supabase · JWT · Express",
+    failedDeploys: 3,
+    openTickets: 7,
+    openPRs: 2,
+    blockedCount: 1,
+    jiraTickets: [
+      { id: "MRI-88", title: "Refactor JWT middleware to support refresh tokens", status: "Doing", tab: "in_progress" },
+      { id: "MRI-91", title: "Add rate limiting to /auth/login endpoint", status: "Doing", tab: "in_progress" },
+      { id: "MRI-85", title: "OAuth2 Google login integration", status: "Review", tab: "review" },
+      { id: "MRI-79", title: "Fix token expiry race condition on mobile", status: "Blocked", tab: "blocked" },
+    ],
+    commits: [
+      { message: "fix: resolve JWT expiry issue on token refresh", author: "daniel", time: "23 min ago", hash: "#a4f21c" },
+      { message: "refactor: move auth middleware to shared lib", author: "daniel", time: "3 hrs ago", hash: "#b92de1" },
+      { message: "feat: add login rate limiter — express-rate-limit", author: "francis", time: "5 hrs ago", hash: "#cc1a88" },
+      { message: "chore: update Supabase auth config for prod env", author: "sultan", time: "yesterday", hash: "#d03f55" },
+    ],
+  },
+  // Payment API
+  "1": {
+    stack: "Go · PostgreSQL · Stripe · Redis",
+    failedDeploys: 0,
+    openTickets: 4,
+    openPRs: 4,
+    blockedCount: 0,
+    jiraTickets: [
+      { id: "MRI-95", title: "Stripe webhook retry logic implementation", status: "Doing", tab: "in_progress" },
+      { id: "MRI-94", title: "Audit log model for billing transactions", status: "Review", tab: "review" },
+    ],
+    commits: [
+      { message: "feat: add idempotency keys to stripe customer creation", author: "raj", time: "1 hr ago", hash: "#f2a89c" },
+      { message: "fix: payment intent status webhook validation", author: "amara", time: "3 hrs ago", hash: "#bd31fa" },
+    ],
+  },
+  // Default fallback
+  default: {
+    stack: "React · Next.js · TailwindCSS · TypeScript",
+    failedDeploys: 0,
+    openTickets: 5,
+    openPRs: 3,
+    blockedCount: 0,
+    jiraTickets: [
+      { id: "MRI-102", title: "Implement dark mode styles for chart widgets", status: "Doing", tab: "in_progress" },
+      { id: "MRI-105", title: "Refactor dynamic routing layout structure", status: "Review", tab: "review" },
+    ],
+    commits: [
+      { message: "feat: add light/dark mode design tokens", author: "sultan", time: "1 hr ago", hash: "#e2c5fa" },
+      { message: "fix: handle hydration mismatch on layout load", author: "priya", time: "4 hrs ago", hash: "#b9f3e4" },
+    ],
+  },
+};
+
+/* ──────────────────────────────────────────────
+   PROJECTS PAGE COMPONENT
    ────────────────────────────────────────────── */
 export default function ProjectsPage() {
   const [search, setSearch] = useState("");
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [jiraTab, setJiraTab] = useState<"in_progress" | "review" | "blocked">("in_progress");
+  const [periodFilter, setPeriodFilter] = useState<"today" | "this_week" | "sprint_12">("today");
 
   const filtered = PROJECTS.filter(
     (p) =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.description.toLowerCase().includes(search.toLowerCase()),
   );
+
+  // If a project is selected, render the detail view
+  if (selectedProjectId) {
+    const project = PROJECTS.find((p) => p.id === selectedProjectId) || PROJECTS[0];
+    const details = PROJECT_DETAILS[project.id] || PROJECT_DETAILS.default;
+    const sc = statusConfig[project.status];
+
+    // Filter Jira tickets for the current active tab
+    const activeJiraTickets = details.jiraTickets.filter((t) => t.tab === jiraTab);
+
+    return (
+      <div className="space-y-6 animate-fade-in">
+        {/* Back Button & Header */}
+        <div>
+          <button
+            onClick={() => setSelectedProjectId(null)}
+            className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors bg-transparent border-none cursor-pointer p-0 mb-4"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+            Back to Projects
+          </button>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-border/40">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              {project.name === "Auth Service Migration" ? "Auth service" : project.name} — Project view
+            </h1>
+
+            {/* Time Filter Segmented Control */}
+            <div className="flex items-center gap-1 p-0.5 bg-surface border border-border rounded-xl w-fit">
+              {(["today", "this_week", "sprint_12"] as const).map((period) => (
+                <button
+                  key={period}
+                  onClick={() => setPeriodFilter(period)}
+                  className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all cursor-pointer border-none ${
+                    periodFilter === period
+                      ? "bg-surface-elevated text-foreground border border-border"
+                      : "bg-transparent text-muted hover:text-foreground"
+                  }`}
+                >
+                  {period === "today" ? "Today" : period === "this_week" ? "This Week" : "Sprint 12"}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Main Specs Card ── */}
+        <div className="bg-surface border border-border rounded-2xl p-6 relative flex flex-col md:flex-row md:items-center gap-5 justify-between">
+          <div className="flex items-start gap-4">
+            {/* White lock/key icon matching mockup */}
+            <div className="w-12 h-12 rounded-xl bg-background border border-border flex items-center justify-center text-accent flex-shrink-0">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <div>
+              <div className="flex items-center gap-3">
+                <h2 className="text-lg font-semibold text-foreground">
+                  {project.name === "Auth Service Migration" ? "Auth service" : project.name}
+                </h2>
+                <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${sc.cls}`}>
+                  {sc.label}
+                </span>
+              </div>
+              <p className="text-xs text-muted mt-1.5 font-medium">
+                {details.stack}
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Metrics Numbers */}
+          <div className="grid grid-cols-4 gap-2 md:gap-6 border-t md:border-t-0 md:border-l border-border/40 pt-4 md:pt-0 md:pl-8">
+            <div className="text-center md:text-left">
+              <p className="text-lg md:text-xl font-semibold text-foreground tracking-tight">{details.failedDeploys}</p>
+              <p className="text-[10px] text-muted-dark font-medium mt-0.5 uppercase tracking-wider">Failed deploys</p>
+            </div>
+            <div className="text-center md:text-left">
+              <p className="text-lg md:text-xl font-semibold text-foreground tracking-tight">{details.openTickets}</p>
+              <p className="text-[10px] text-muted-dark font-medium mt-0.5 uppercase tracking-wider">Open tickets</p>
+            </div>
+            <div className="text-center md:text-left">
+              <p className="text-lg md:text-xl font-semibold text-foreground tracking-tight">{details.openPRs}</p>
+              <p className="text-[10px] text-muted-dark font-medium mt-0.5 uppercase tracking-wider">PRs open</p>
+            </div>
+            <div className="text-center md:text-left">
+              <p className="text-lg md:text-xl font-semibold text-foreground tracking-tight">{details.blockedCount}</p>
+              <p className="text-[10px] text-muted-dark font-medium mt-0.5 uppercase tracking-wider">Blocked</p>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Details Grid Columns ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {/* Jira tickets Panel */}
+          <div className="bg-surface border border-border rounded-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <span className="text-accent">{DashboardIcons.jira}</span>
+                Jira tickets
+              </h3>
+
+              {/* Sub-tabs inside Jira */}
+              <div className="flex items-center gap-1 p-0.5 bg-background border border-border rounded-xl">
+                {(["in_progress", "review", "blocked"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setJiraTab(tab)}
+                    className={`px-3 py-1 rounded-lg text-[10px] font-semibold transition-all cursor-pointer border-none ${
+                      jiraTab === tab
+                        ? "bg-surface-elevated text-foreground border border-border"
+                        : "bg-transparent text-muted hover:text-foreground"
+                    }`}
+                  >
+                    {tab === "in_progress" ? "In progress" : tab === "review" ? "Review" : "Blocked"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Tickets list */}
+            <div className="space-y-1 pt-1">
+              {activeJiraTickets.length > 0 ? (
+                activeJiraTickets.map((ticket) => (
+                  <div
+                    key={ticket.id}
+                    className="flex items-center justify-between gap-3 p-3.5 rounded-xl hover:bg-surface-hover/50 border border-transparent transition-all"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-[12px] font-semibold text-accent font-mono flex-shrink-0">
+                        {ticket.id}
+                      </span>
+                      <span className="text-[13px] text-foreground/80 truncate">
+                        {ticket.title}
+                      </span>
+                    </div>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border whitespace-nowrap ${
+                      ticket.status === "Blocked"
+                        ? "bg-danger/15 text-danger border-danger/20"
+                        : ticket.status === "Review"
+                        ? "bg-warning/15 text-warning border-warning/20"
+                        : "bg-accent-muted text-accent border border-accent-border/30"
+                    }`}>
+                      {ticket.status}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-muted-dark text-center py-6">No tickets in this state.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Recent Commits Panel */}
+          <div className="bg-surface border border-border rounded-2xl p-5 space-y-4">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <span className="text-accent">{DashboardIcons.github}</span>
+              Recent commits
+            </h3>
+
+            {/* Commits List */}
+            <div className="space-y-4 pt-1">
+              {details.commits.map((c, i) => (
+                <div key={i} className="flex items-start justify-between gap-3 px-1">
+                  <div className="min-w-0">
+                    <p className="text-[13px] text-foreground/90 font-medium leading-normal hover:text-accent transition-colors cursor-pointer truncate">
+                      {c.message}
+                    </p>
+                    <p className="text-[11px] text-muted-dark mt-1 font-medium">
+                      <span className="text-muted hover:text-foreground transition-colors cursor-pointer">{c.author}</span>
+                      {" · "}{c.time}
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-mono text-accent bg-accent-muted border border-accent-border/20 px-2 py-0.5 rounded-md flex-shrink-0">
+                    {c.hash}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -163,6 +431,7 @@ export default function ProjectsPage() {
           return (
             <div
               key={project.id}
+              onClick={() => setSelectedProjectId(project.id)}
               className="bg-surface border border-border rounded-xl p-5 hover:border-accent-border transition-all group cursor-pointer"
             >
               {/* Top row */}
