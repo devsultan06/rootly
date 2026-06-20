@@ -32,4 +32,11 @@ export declare class AuthService {
             emailSent: boolean;
         };
     }>;
+    sendWelcomeEmail(supabaseUser: any): Promise<{
+        success: boolean;
+        message: string;
+        data: {
+            emailSent: boolean;
+        };
+    }>;
 }

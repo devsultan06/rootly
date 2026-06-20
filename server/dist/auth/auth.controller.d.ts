@@ -27,4 +27,11 @@ export declare class AuthController {
             emailSent: boolean;
         };
     }>;
+    welcome(user: any): Promise<{
+        success: boolean;
+        message: string;
+        data: {
+            emailSent: boolean;
+        };
+    }>;
 }

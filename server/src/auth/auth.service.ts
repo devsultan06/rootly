@@ -224,4 +224,19 @@ export class AuthService {
       },
     };
   }
+
+  async sendWelcomeEmail(supabaseUser: any) {
+    this.logger.log(`Sending welcome email to: ${supabaseUser.email}`);
+    const fullName = supabaseUser.user_metadata?.full_name || 'Developer';
+    
+    const emailSent = await this.emailService.sendWelcomeEmail(supabaseUser.email, fullName);
+    
+    return {
+      success: true,
+      message: 'Welcome email sent successfully.',
+      data: {
+        emailSent,
+      },
+    };
+  }
 }

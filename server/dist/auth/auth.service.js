@@ -158,6 +158,18 @@ let AuthService = AuthService_1 = class AuthService {
             },
         };
     }
+    async sendWelcomeEmail(supabaseUser) {
+        this.logger.log(`Sending welcome email to: ${supabaseUser.email}`);
+        const fullName = supabaseUser.user_metadata?.full_name || 'Developer';
+        const emailSent = await this.emailService.sendWelcomeEmail(supabaseUser.email, fullName);
+        return {
+            success: true,
+            message: 'Welcome email sent successfully.',
+            data: {
+                emailSent,
+            },
+        };
+    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = AuthService_1 = __decorate([

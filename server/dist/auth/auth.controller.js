@@ -17,6 +17,8 @@ const common_1 = require("@nestjs/common");
 const auth_service_1 = require("./auth.service");
 const signup_dto_1 = require("./dto/signup.dto");
 const forgot_password_dto_1 = require("./dto/forgot-password.dto");
+const supabase_auth_guard_1 = require("../supabase/supabase-auth.guard");
+const current_user_decorator_1 = require("../supabase/current-user.decorator");
 let AuthController = class AuthController {
     authService;
     constructor(authService) {
@@ -27,6 +29,9 @@ let AuthController = class AuthController {
     }
     async forgotPassword(forgotPasswordDto) {
         return this.authService.forgotPassword(forgotPasswordDto);
+    }
+    async welcome(user) {
+        return this.authService.sendWelcomeEmail(user);
     }
 };
 exports.AuthController = AuthController;
@@ -44,6 +49,14 @@ __decorate([
     __metadata("design:paramtypes", [forgot_password_dto_1.ForgotPasswordDto]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "forgotPassword", null);
+__decorate([
+    (0, common_1.Post)('welcome'),
+    (0, common_1.UseGuards)(supabase_auth_guard_1.SupabaseAuthGuard),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "welcome", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService])

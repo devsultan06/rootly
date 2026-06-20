@@ -34,6 +34,24 @@ function VerifyContent() {
         }
 
         setStatus("success");
+
+        // Fire and forget welcome email request to backend
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          const token = sessionData.session?.access_token;
+          if (token) {
+            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
+            fetch(`${backendUrl}/auth/welcome`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }).catch((err) => console.error("Welcome email error:", err));
+          }
+        } catch (welcomeErr) {
+          console.error("Welcome email fetch error:", welcomeErr);
+        }
+
         // Smoothly redirect to dashboard after 2 seconds
         setTimeout(() => {
           router.push("/dashboard");
