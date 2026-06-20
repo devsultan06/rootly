@@ -130,7 +130,7 @@ export default function GetStartedPage() {
 
         {/* Right Column: Registration Form Card */}
         <div className="w-full md:w-1/2 max-w-[420px]">
-          <div className="bg-[#111111] border border-white/5 rounded-xl p-8 shadow-[0_24px_64px_rgba(0,0,0,0.6)]">
+          <div className="bg-[#111111] border border-white/5 rounded-xl p-8 shadow-2xl">
             {successMessage ? (
               <div className="text-center py-6">
                 <div className="w-16 h-16 bg-[#14B8A6]/10 border border-[#14B8A6]/20 rounded-full flex items-center justify-center mx-auto mb-6 text-[#14B8A6] animate-pulse">

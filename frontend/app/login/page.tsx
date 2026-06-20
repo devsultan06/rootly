@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useLogin } from "../../features/auth/useLogin";
 
 /* ──────────────────────────────────────────────
    PREMIUM LOGIN PAGE (B2B SaaS Style)
@@ -10,10 +11,25 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const loginMutation = useLogin();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Log in attempt:", { email, password });
+    setErrorMessage("");
+
+    loginMutation.mutate(
+      { email, password },
+      {
+        onSuccess: () => {
+          window.location.href = "/dashboard";
+        },
+        onError: (err: any) => {
+          setErrorMessage(err.message || "Invalid email or password.");
+        },
+      }
+    );
   };
 
   return (
@@ -68,11 +84,17 @@ export default function LoginPage() {
 
         {/* Right/Center Column: Clean Form Card */}
         <div className="w-full md:w-1/2 max-w-[400px]">
-          <div className="bg-[#111111] border border-white/5 rounded-xl p-8 shadow-[0_24px_64px_rgba(0,0,0,0.6)]">
+          <div className="bg-[#111111] border border-white/5 rounded-xl p-8 shadow-2xl">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-medium tracking-tight text-white">Log in to Rootly</h2>
            
             </div>
+
+            {errorMessage && (
+              <div className="bg-red-500/10 text-red-400 border border-red-500/25 rounded-lg p-3 text-xs mb-4 animate-pulse">
+                {errorMessage}
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -90,7 +112,8 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoFocus
-                  className="w-full bg-[#09090B] border border-white/5 hover:border-white/10 focus:border-[#14B8A6]/40 focus:ring-1 focus:ring-[#14B8A6]/10 rounded-lg py-2.5 px-3.5 text-xs text-foreground placeholder-muted-dark outline-none transition-all"
+                  disabled={loginMutation.isPending}
+                  className="w-full bg-[#09090B] border border-white/5 hover:border-white/10 focus:border-[#14B8A6]/40 focus:ring-1 focus:ring-[#14B8A6]/10 rounded-lg py-2.5 px-3.5 text-xs text-foreground placeholder-muted-dark outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -117,12 +140,14 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="w-full bg-[#09090B] border border-white/5 hover:border-white/10 focus:border-[#14B8A6]/40 focus:ring-1 focus:ring-[#14B8A6]/10 rounded-lg py-2.5 px-3.5 pr-10 text-xs text-foreground placeholder-muted-dark outline-none transition-all"
+                    disabled={loginMutation.isPending}
+                    className="w-full bg-[#09090B] border border-white/5 hover:border-white/10 focus:border-[#14B8A6]/40 focus:ring-1 focus:ring-[#14B8A6]/10 rounded-lg py-2.5 px-3.5 pr-10 text-xs text-foreground placeholder-muted-dark outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted hover:text-white transition-colors duration-150 p-0.5 cursor-pointer"
+                    disabled={loginMutation.isPending}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted hover:text-white transition-colors duration-150 p-0.5 cursor-pointer disabled:opacity-50"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
@@ -142,9 +167,20 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                className="w-full py-2.5 px-4 bg-[#14B8A6] hover:bg-[#0D9488] active:scale-[0.98] text-black font-semibold text-xs rounded-lg transition-all duration-150 cursor-pointer shadow-md shadow-[#14B8A6]/10"
+                disabled={loginMutation.isPending}
+                className="w-full py-2.5 px-4 bg-[#14B8A6] hover:bg-[#0D9488] active:scale-[0.98] text-black font-semibold text-xs rounded-lg transition-all duration-150 cursor-pointer shadow-md shadow-[#14B8A6]/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Continue
+                {loginMutation.isPending ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4 text-black" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    <span>Logging in...</span>
+                  </>
+                ) : (
+                  <span>Continue</span>
+                )}
               </button>
             </form>
 

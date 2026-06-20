@@ -101,6 +101,7 @@ let AuthService = AuthService_1 = class AuthService {
         }
         const tokenHash = linkData.properties.hashed_token;
         const verificationLink = `${frontendUrl}/verify?token_hash=${tokenHash}&type=signup`;
+        this.logger.log(`Generated verification link for ${dto.email}: ${verificationLink}`);
         const emailSent = await this.emailService.sendVerificationEmail(dto.email, dto.fullName, verificationLink);
         return {
             success: true,

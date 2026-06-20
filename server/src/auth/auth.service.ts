@@ -1,4 +1,9 @@
-import { Injectable, Logger, InternalServerErrorException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  InternalServerErrorException,
+  BadRequestException,
+} from '@nestjs/common';
 import { SupabaseService } from '../supabase/supabase.service';
 import { ConfigService } from '@nestjs/config';
 import { EmailService } from '../email/email.service';
@@ -19,39 +24,50 @@ export class AuthService {
     const adminClient = this.supabaseService.getAdminClient();
 
     // 1. Check if user profile already exists to prevent duplicates
-    const { data: existingProfile, error: profileCheckError } = await adminClient
-      .from('profiles')
-      .select('id')
-      .eq('email', dto.email)
-      .maybeSingle();
+    const { data: existingProfile, error: profileCheckError } =
+      await adminClient
+        .from('profiles')
+        .select('id')
+        .eq('email', dto.email)
+        .maybeSingle();
 
     if (profileCheckError) {
-      this.logger.error(`Error checking existing profile: ${profileCheckError.message}`);
-      throw new InternalServerErrorException(`Signup check failed: ${profileCheckError.message}`);
+      this.logger.error(
+        `Error checking existing profile: ${profileCheckError.message}`,
+      );
+      throw new InternalServerErrorException(
+        `Signup check failed: ${profileCheckError.message}`,
+      );
     }
 
     if (existingProfile) {
-      throw new BadRequestException('An account with this email already exists.');
+      throw new BadRequestException(
+        'An account with this email already exists.',
+      );
     }
 
     // 2. Generate Supabase sign up link (which creates user in auth.users database)
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
-    const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
-      type: 'signup',
-      email: dto.email,
-      password: dto.password,
-      options: {
-        data: {
-          full_name: dto.fullName,
-          company_name: dto.companyName,
+    const frontendUrl =
+      this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    const { data: linkData, error: linkError } =
+      await adminClient.auth.admin.generateLink({
+        type: 'signup',
+        email: dto.email,
+        password: dto.password,
+        options: {
+          data: {
+            full_name: dto.fullName,
+            company_name: dto.companyName,
+          },
+          redirectTo: `${frontendUrl}/verify`,
         },
-        redirectTo: `${frontendUrl}/verify`,
-      },
-    });
+      });
 
     if (linkError) {
       this.logger.error(`Supabase generateLink error: ${linkError.message}`);
-      throw new BadRequestException(`Registration failed: ${linkError.message}`);
+      throw new BadRequestException(
+        `Registration failed: ${linkError.message}`,
+      );
     }
 
     const userId = linkData.user.id;
@@ -64,7 +80,9 @@ export class AuthService {
       .maybeSingle();
 
     if (!profileCheck) {
-      this.logger.log(`Safety trigger fallback: profile not found for ${userId}, inserting manually.`);
+      this.logger.log(
+        `Safety trigger fallback: profile not found for ${userId}, inserting manually.`,
+      );
       const { error: insertProfileError } = await adminClient
         .from('profiles')
         .insert({
@@ -74,8 +92,12 @@ export class AuthService {
         });
 
       if (insertProfileError) {
-        this.logger.error(`Manual profile creation failed: ${insertProfileError.message}`);
-        throw new InternalServerErrorException(`Profile creation fallback failed: ${insertProfileError.message}`);
+        this.logger.error(
+          `Manual profile creation failed: ${insertProfileError.message}`,
+        );
+        throw new InternalServerErrorException(
+          `Profile creation fallback failed: ${insertProfileError.message}`,
+        );
       }
     }
 
@@ -87,8 +109,12 @@ export class AuthService {
       .single();
 
     if (workspaceError) {
-      this.logger.error(`Failed to create workspace: ${workspaceError.message}`);
-      throw new InternalServerErrorException(`Workspace creation failed: ${workspaceError.message}`);
+      this.logger.error(
+        `Failed to create workspace: ${workspaceError.message}`,
+      );
+      throw new InternalServerErrorException(
+        `Workspace creation failed: ${workspaceError.message}`,
+      );
     }
 
     const workspaceId = workspaceData.id;
@@ -104,19 +130,28 @@ export class AuthService {
       });
 
     if (memberError) {
-      this.logger.error(`Failed to link member to workspace: ${memberError.message}`);
-      throw new InternalServerErrorException(`Workspace member linking failed: ${memberError.message}`);
+      this.logger.error(
+        `Failed to link member to workspace: ${memberError.message}`,
+      );
+      throw new InternalServerErrorException(
+        `Workspace member linking failed: ${memberError.message}`,
+      );
     }
 
     // 6. Formulate custom verification link & dispatch email via Brevo
     const tokenHash = linkData.properties.hashed_token;
     const verificationLink = `${frontendUrl}/verify?token_hash=${tokenHash}&type=signup`;
 
-    const emailSent = await this.emailService.sendVerificationEmail(dto.email, dto.fullName, verificationLink);
+    const emailSent = await this.emailService.sendVerificationEmail(
+      dto.email,
+      dto.fullName,
+      verificationLink,
+    );
 
     return {
       success: true,
-      message: 'Verification email sent. Please check your inbox to confirm your account creation.',
+      message:
+        'Verification email sent. Please check your inbox to confirm your account creation.',
       data: {
         userId,
         email: dto.email,
@@ -128,4 +163,3 @@ export class AuthService {
     };
   }
 }
-

@@ -49,7 +49,7 @@ function VerifyContent() {
 
   return (
     <div className="w-full max-w-[420px] mx-auto relative z-10 px-4">
-      <div className="bg-[#111111] border border-white/5 rounded-xl p-8 shadow-[0_24px_64px_rgba(0,0,0,0.6)] text-center">
+      <div className="bg-[#111111] border border-white/5 rounded-xl p-8  text-center">
         
         {/* Loading State */}
         {status === "loading" && (
@@ -143,9 +143,17 @@ export default function VerifyPage() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
+              <path
+                d="M10 20C10 20 6 19 4 22M18 20C18 20 22 19 24 22"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
             </svg>
           </div>
-          <span className="text-[18px] font-semibold tracking-tight text-white">Rootly</span>
+          <div className="flex flex-col">
+            <span className="text-[18px] font-semibold tracking-tight leading-none text-white">Rootly</span>
+          </div>
         </Link>
       </header>
 
