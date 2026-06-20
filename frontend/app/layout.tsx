@@ -21,6 +21,8 @@ export const metadata = {
   },
 };
 
+import QueryProvider from "./components/QueryProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -41,7 +43,9 @@ export default function RootLayout({
         />
       </head>
       <body>
-        {children}
+        <QueryProvider>
+          {children}
+        </QueryProvider>
       </body>
     </html>
   );

@@ -1,0 +1,23 @@
+import { SupabaseService } from '../supabase/supabase.service';
+import { ConfigService } from '@nestjs/config';
+import { EmailService } from '../email/email.service';
+import { SignUpDto } from './dto/signup.dto';
+export declare class AuthService {
+    private readonly supabaseService;
+    private readonly configService;
+    private readonly emailService;
+    private readonly logger;
+    constructor(supabaseService: SupabaseService, configService: ConfigService, emailService: EmailService);
+    signUpUser(dto: SignUpDto): Promise<{
+        success: boolean;
+        message: string;
+        data: {
+            userId: string;
+            email: string;
+            fullName: string;
+            companyName: string;
+            workspaceId: any;
+            emailSent: boolean;
+        };
+    }>;
+}
