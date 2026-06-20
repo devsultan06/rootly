@@ -92,7 +92,7 @@ function ResetPasswordContent() {
 
   return (
     <div className="w-full max-w-[400px] mx-auto relative z-10 px-4">
-      <div className="bg-[#111111] border border-white/5 rounded-xl p-8 shadow-2xl">
+      <div className="bg-[#111111] border border-white/5 rounded-xl p-8">
         
         {/* State 1: Verifying Recovery Token */}
         {otpStatus === "loading" && (

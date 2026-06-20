@@ -84,7 +84,7 @@ export default function LoginPage() {
 
         {/* Right/Center Column: Clean Form Card */}
         <div className="w-full md:w-1/2 max-w-[400px]">
-          <div className="bg-[#111111] border border-white/5 rounded-xl p-8 shadow-2xl">
+          <div className="bg-[#111111] border border-white/5 rounded-xl p-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-medium tracking-tight text-white">Log in to Rootly</h2>
            
