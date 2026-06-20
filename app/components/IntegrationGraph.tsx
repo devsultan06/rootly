@@ -145,7 +145,7 @@ export default function IntegrationGraph() {
           width: 900,
           height: 500,
           background:
-            "radial-gradient(ellipse at center bottom, rgba(79, 70, 229, 0.06) 0%, rgba(20, 184, 166, 0.03) 30%, transparent 70%)",
+            "radial-gradient(ellipse at center bottom, rgba(20, 184, 166, 0.08) 0%, rgba(20, 184, 166, 0.03) 30%, transparent 70%)",
           pointerEvents: "none",
         }}
       />
@@ -232,9 +232,9 @@ export default function IntegrationGraph() {
               </filter>
 
               <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#4F46E5" stopOpacity="0.15" />
-                <stop offset="50%" stopColor="#4F46E5" stopOpacity="0.05" />
-                <stop offset="100%" stopColor="#4F46E5" stopOpacity="0" />
+                <stop offset="0%" stopColor="#14B8A6" stopOpacity="0.15" />
+                <stop offset="50%" stopColor="#14B8A6" stopOpacity="0.05" />
+                <stop offset="100%" stopColor="#14B8A6" stopOpacity="0" />
               </radialGradient>
             </defs>
 
@@ -254,7 +254,7 @@ export default function IntegrationGraph() {
                 cy={toSVG(CY)}
                 r="40"
                 fill="none"
-                stroke="#4F46E5"
+                stroke="#14B8A6"
                 strokeOpacity="0"
                 strokeWidth="1"
               >
@@ -293,7 +293,7 @@ export default function IntegrationGraph() {
                   <path
                     d={`M${sx},${sy} Q${mx},${my} ${ex},${ey}`}
                     fill="none"
-                    stroke={isHovered ? tool.color : "#4F46E5"}
+                    stroke={isHovered ? tool.color : "#14B8A6"}
                     strokeWidth={isHovered ? 1.5 : 0.8}
                     strokeOpacity={lineOpacity}
                     filter={isHovered ? "url(#lineGlow)" : undefined}
@@ -367,7 +367,7 @@ export default function IntegrationGraph() {
               <circle
                 r="32"
                 fill="#0F0F14"
-                stroke="#4F46E5"
+                stroke="#14B8A6"
                 strokeWidth="1.5"
                 strokeOpacity="0.4"
               >
@@ -381,7 +381,7 @@ export default function IntegrationGraph() {
               <circle
                 r="28"
                 fill="none"
-                stroke="#4F46E5"
+                stroke="#14B8A6"
                 strokeWidth="0.5"
                 strokeOpacity="0.15"
               />
@@ -389,7 +389,7 @@ export default function IntegrationGraph() {
               <g transform="translate(-12, -14)" opacity="0.9">
                 <path
                   d="M12 0L12 8M12 8C12 8 6 12 6 16C6 20 9 24 12 24C15 24 18 20 18 16C18 12 12 8 12 8Z"
-                  stroke="#818CF8"
+                  stroke="#14B8A6"
                   strokeWidth="1.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -578,7 +578,7 @@ export default function IntegrationGraph() {
           <span style={{ margin: "0 10px", opacity: 0.3 }}>•</span>
           <span style={{ color: "#9CA3AF" }}>Code</span>
           <span style={{ margin: "0 10px", opacity: 0.3 }}>—</span>
-          <span style={{ color: "#818CF8" }}>
+          <span style={{ color: "#14B8A6" }}>
             One living intelligence layer.
           </span>
         </div>
