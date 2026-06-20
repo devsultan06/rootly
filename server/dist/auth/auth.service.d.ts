@@ -2,6 +2,7 @@ import { SupabaseService } from '../supabase/supabase.service';
 import { ConfigService } from '@nestjs/config';
 import { EmailService } from '../email/email.service';
 import { SignUpDto } from './dto/signup.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 export declare class AuthService {
     private readonly supabaseService;
     private readonly configService;
@@ -17,6 +18,17 @@ export declare class AuthService {
             fullName: string;
             companyName: string;
             workspaceId: any;
+            emailSent: boolean;
+        };
+    }>;
+    forgotPassword(dto: ForgotPasswordDto): Promise<{
+        success: boolean;
+        message: string;
+        data?: undefined;
+    } | {
+        success: boolean;
+        message: string;
+        data: {
             emailSent: boolean;
         };
     }>;

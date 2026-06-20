@@ -1,5 +1,6 @@
 import { AuthService } from './auth.service';
 import { SignUpDto } from './dto/signup.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 export declare class AuthController {
     private readonly authService;
     constructor(authService: AuthService);
@@ -12,6 +13,17 @@ export declare class AuthController {
             fullName: string;
             companyName: string;
             workspaceId: any;
+            emailSent: boolean;
+        };
+    }>;
+    forgotPassword(forgotPasswordDto: ForgotPasswordDto): Promise<{
+        success: boolean;
+        message: string;
+        data?: undefined;
+    } | {
+        success: boolean;
+        message: string;
+        data: {
             emailSent: boolean;
         };
     }>;

@@ -101,7 +101,6 @@ let AuthService = AuthService_1 = class AuthService {
         }
         const tokenHash = linkData.properties.hashed_token;
         const verificationLink = `${frontendUrl}/verify?token_hash=${tokenHash}&type=signup`;
-        this.logger.log(`Generated verification link for ${dto.email}: ${verificationLink}`);
         const emailSent = await this.emailService.sendVerificationEmail(dto.email, dto.fullName, verificationLink);
         return {
             success: true,
@@ -112,6 +111,49 @@ let AuthService = AuthService_1 = class AuthService {
                 fullName: dto.fullName,
                 companyName: dto.companyName,
                 workspaceId,
+                emailSent,
+            },
+        };
+    }
+    async forgotPassword(dto) {
+        this.logger.log(`Received forgot password request for: ${dto.email}`);
+        const adminClient = this.supabaseService.getAdminClient();
+        const { data: profile, error: profileError } = await adminClient
+            .from('profiles')
+            .select('id, full_name')
+            .eq('email', dto.email)
+            .maybeSingle();
+        if (profileError) {
+            this.logger.error(`Error querying user profile for reset: ${profileError.message}`);
+            throw new common_1.InternalServerErrorException(`Password reset failed: ${profileError.message}`);
+        }
+        if (!profile) {
+            this.logger.warn(`User with email ${dto.email} not found. Returning fake success.`);
+            return {
+                success: true,
+                message: 'If the email matches a registered account, you will receive a password reset link shortly.',
+            };
+        }
+        const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
+        const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
+            type: 'recovery',
+            email: dto.email,
+            options: {
+                redirectTo: `${frontendUrl}/reset-password`,
+            },
+        });
+        if (linkError) {
+            this.logger.error(`Supabase generateLink recovery error: ${linkError.message}`);
+            throw new common_1.BadRequestException(`Failed to generate recovery link: ${linkError.message}`);
+        }
+        const tokenHash = linkData.properties.hashed_token;
+        const resetLink = `${frontendUrl}/reset-password?token_hash=${tokenHash}&type=recovery`;
+        this.logger.log(`Generated recovery link for ${dto.email}: ${resetLink}`);
+        const emailSent = await this.emailService.sendPasswordResetEmail(dto.email, profile.full_name, resetLink);
+        return {
+            success: true,
+            message: 'If the email matches a registered account, you will receive a password reset link shortly.',
+            data: {
                 emailSent,
             },
         };
