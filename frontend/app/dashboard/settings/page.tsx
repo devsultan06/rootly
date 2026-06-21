@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { supabase } from "../../../lib/supabase";
 
 /* ──────────────────────────────────────────────
    TYPES
@@ -76,8 +77,111 @@ type Section = (typeof SECTIONS)[number];
    SETTINGS PAGE
    ────────────────────────────────────────────── */
 export default function SettingsPage() {
-  const [activeSection, setActiveSection] = useState<Section>("Team");
+  const [activeSection, setActiveSection] = useState<Section>("Profile");
   const [teamSubTab, setTeamSubTab] = useState<"members" | "permissions">("permissions"); // Default to permissions sub-tab to show updates!
+  
+  const [profileName, setProfileName] = useState("Developer");
+  const [profileEmail, setProfileEmail] = useState("");
+  const [profileCompany, setProfileCompany] = useState("");
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">("idle");
+  const [saveMessage, setSaveMessage] = useState("");
+
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setProfileEmail(session.user.email || "");
+          setProfileName(session.user.user_metadata?.full_name || "Developer");
+
+          // Query workspace name
+          const { data: memberData, error } = await supabase
+            .from("workspace_members")
+            .select(`
+              workspace_id,
+              workspaces (
+                name
+              )
+            `)
+            .eq("profile_id", session.user.id);
+
+          console.log("SETTINGS DEBUG: memberData =", memberData, "error =", error);
+
+          if (error) {
+            console.error("Error loading workspace name:", error);
+          }
+
+          if (memberData && memberData.length > 0) {
+            const activeWorkspace = memberData.find((m: any) => m.workspaces !== null && m.workspaces !== undefined);
+            if (activeWorkspace && activeWorkspace.workspaces) {
+              const ws = activeWorkspace.workspaces as any;
+              const name = Array.isArray(ws) ? ws[0]?.name : ws.name;
+              setProfileCompany(name || "");
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load user profile:", err);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    fetchProfileData();
+  }, []);
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    setSaveStatus("idle");
+    setSaveMessage("");
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("No active session found.");
+      }
+
+      // 1. Update full name in profiles table
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ full_name: profileName })
+        .eq("id", session.user.id);
+
+      if (profileError) throw profileError;
+
+      // Update auth user metadata
+      await supabase.auth.updateUser({
+        data: { full_name: profileName }
+      });
+
+      // 2. Update workspace name
+      const { data: memberData } = await supabase
+        .from("workspace_members")
+        .select("workspace_id")
+        .eq("profile_id", session.user.id);
+
+      if (memberData && memberData.length > 0) {
+        const workspaceId = memberData[0].workspace_id;
+        const { error: wsError } = await supabase
+          .from("workspaces")
+          .update({ name: profileCompany })
+          .eq("id", workspaceId);
+
+        if (wsError) throw wsError;
+      }
+
+      setSaveStatus("success");
+      setSaveMessage("Settings saved successfully!");
+    } catch (err: any) {
+      setSaveStatus("error");
+      setSaveMessage(err.message || "Failed to update profile settings.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
   
   const [notifications, setNotifications] = useState(
     NOTIFICATION_SETTINGS.map((n) => ({ ...n })),
@@ -266,42 +370,90 @@ export default function SettingsPage() {
 
       {/* ── Profile ── */}
       {activeSection === "Profile" && (
-        <div className="bg-surface border border-border rounded-xl p-6 space-y-6 max-w-2xl">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-accent/20 border border-accent-border/30 flex items-center justify-center text-accent text-xl font-bold">
-              SC
+        <div className="bg-surface border border-border rounded-xl p-6 space-y-6 max-w-2xl text-left">
+          {profileLoading ? (
+            <div className="py-12 flex flex-col items-center justify-center">
+              <div className="w-8 h-8 border-3 border-[#14B8A6]/20 border-t-[#14B8A6] rounded-full animate-spin mb-3"></div>
+              <p className="text-xs text-muted">Loading profile settings...</p>
             </div>
-            <div>
-              <h3 className="text-base font-semibold text-foreground">
-                Sultan C.
-              </h3>
-              <p className="text-xs text-muted-dark">sultan@rootly.io</p>
-            </div>
-          </div>
-
-          <div className="space-y-4 pt-2">
-            {[
-              { label: "Full Name", value: "Sultan C.", id: "name" },
-              { label: "Email", value: "sultan@rootly.io", id: "email" },
-              { label: "Company", value: "Rootly Inc.", id: "company" },
-              { label: "Role", value: "Engineering Lead", id: "role" },
-            ].map((field) => (
-              <div key={field.id}>
-                <label className="block text-[10px] font-semibold text-muted uppercase tracking-wider mb-1.5">
-                  {field.label}
-                </label>
-                <input
-                  type="text"
-                  defaultValue={field.value}
-                  className="w-full bg-surface-elevated border border-border hover:border-border focus:border-accent-border rounded-lg py-2.5 px-3.5 text-sm text-foreground outline-none transition-all"
-                />
+          ) : (
+            <form onSubmit={handleSaveProfile} className="space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-accent/20 border border-accent-border/30 flex items-center justify-center text-accent text-xl font-bold">
+                  {profileName
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase() || "DV"}
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-foreground">
+                    {profileName}
+                  </h3>
+                  <p className="text-xs text-muted-dark">{profileEmail}</p>
+                </div>
               </div>
-            ))}
-          </div>
 
-          <button className="px-5 py-2 rounded-lg text-xs font-semibold bg-accent text-black hover:bg-accent-hover transition-all cursor-pointer border-none">
-            Save Changes
-          </button>
+              {saveMessage && (
+                <div className={`p-3 text-xs rounded-lg border ${
+                  saveStatus === "success"
+                    ? "bg-success/10 text-success border-success/20"
+                    : "bg-danger/10 text-danger border-danger/20"
+                }`}>
+                  {saveMessage}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-semibold text-muted uppercase tracking-wider mb-1.5">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={profileName}
+                    onChange={(e) => setProfileName(e.target.value)}
+                    className="w-full bg-surface-elevated border border-border hover:border-border-subtle focus:border-accent-border rounded-lg py-2.5 px-3.5 text-sm text-foreground outline-none transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-semibold text-muted uppercase tracking-wider mb-1.5">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    disabled
+                    value={profileEmail}
+                    className="w-full bg-[#0E0E10] border border-border/60 rounded-lg py-2.5 px-3.5 text-sm text-muted outline-none opacity-60 cursor-not-allowed"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-semibold text-muted uppercase tracking-wider mb-1.5">
+                    Company / Workspace Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={profileCompany}
+                    onChange={(e) => setProfileCompany(e.target.value)}
+                    className="w-full bg-surface-elevated border border-border hover:border-border-subtle focus:border-accent-border rounded-lg py-2.5 px-3.5 text-sm text-foreground outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="px-5 py-2.5 rounded-lg text-xs font-semibold bg-accent text-black hover:bg-accent-hover transition-all cursor-pointer border-none flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSaving ? "Saving..." : "Save Changes"}
+              </button>
+            </form>
+          )}
         </div>
       )}
 
