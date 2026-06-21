@@ -29,11 +29,7 @@ export default function GetStartedPage() {
       { email, fullName: name, companyName: company, password },
       {
         onSuccess: (data) => {
-          if (data.message && !data.data) {
-            setSuccessMessage(data.message);
-          } else {
-            window.location.href = "/dashboard";
-          }
+          setSuccessMessage(data.message || "Verification email sent. Please check your inbox.");
         },
         onError: (err: any) => {
           setErrorMessage(err.message || "An unexpected registration error occurred.");
@@ -144,12 +140,6 @@ export default function GetStartedPage() {
                   We've sent a verification email to <span className="text-[#14B8A6] font-medium">{email}</span>. Click the link in the email to activate your workspace and get started.
                 </p>
                 <div className="space-y-3">
-                  <a
-                    href={`mailto:${email}`}
-                    className="inline-flex w-full items-center justify-center gap-2 py-2.5 px-4 bg-[#14B8A6] hover:bg-[#0D9488] active:scale-[0.98] text-black font-semibold text-xs rounded-lg transition-all duration-150 cursor-pointer shadow-md shadow-[#14B8A6]/10"
-                  >
-                    Open Mail App
-                  </a>
                   <button
                     onClick={() => {
                       setSuccessMessage("");
@@ -158,7 +148,7 @@ export default function GetStartedPage() {
                       setCompany("");
                       setPassword("");
                     }}
-                    className="w-full text-xs text-muted hover:text-white transition-colors duration-150 py-2 cursor-pointer"
+                    className="inline-flex w-full items-center justify-center py-2.5 px-4 bg-[#09090B] hover:bg-white/[0.02] border border-white/5 hover:border-white/10 text-white font-semibold text-xs rounded-lg transition-all duration-150 cursor-pointer"
                   >
                     Back to registration
                   </button>

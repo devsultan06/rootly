@@ -91,7 +91,7 @@ export default function LoginPage() {
             </div>
 
             {errorMessage && (
-              <div className="bg-red-500/10 text-red-400 border border-red-500/25 rounded-lg p-3 text-xs mb-4 animate-pulse">
+              <div className="bg-red-500/10 text-red-400 border border-red-500/25 rounded-lg p-3 text-xs mb-4">
                 {errorMessage}
               </div>
             )}

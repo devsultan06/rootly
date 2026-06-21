@@ -399,7 +399,6 @@ let EmailService = EmailService_1 = class EmailService {
             border: 1px solid #222222;
             border-radius: 12px;
             padding: 40px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
           }
           .logo {
             display: flex;
@@ -491,17 +490,17 @@ let EmailService = EmailService_1 = class EmailService {
           <p>Your workspace is officially active. Rootly compiles standups, tickets, Slack context, and code logic into a single, fully traceable intelligence core. Here are the 3 quick-start actions to get your team up and running:</p>
           
           <div class="step-card">
-            <div class="step-title">🔌 Step 1: Connect your Integrations</div>
+            <div class="step-title">Step 1: Connect your Integrations</div>
             <p class="step-desc">Link Jira, GitHub, Slack, and calendars in under 5 minutes to feed your team's live context to the AI core.</p>
           </div>
 
           <div class="step-card">
-            <div class="step-title">🤖 Step 2: Query the AI Assistant</div>
+            <div class="step-title">Step 2: Query the AI Assistant</div>
             <p class="step-desc">Head to the Ask AI panel to summarize sprints, compile standups, and detect blocker risks instantly.</p>
           </div>
 
           <div class="step-card">
-            <div class="step-title">👥 Step 3: Invite your Engineering Team</div>
+            <div class="step-title">Step 3: Invite your Engineering Team</div>
             <p class="step-desc">Add team members in Settings and build custom role permissions to delegate access control.</p>
           </div>
 
