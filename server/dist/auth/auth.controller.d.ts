@@ -1,6 +1,7 @@
 import { AuthService } from './auth.service';
 import { SignUpDto } from './dto/signup.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { OnboardingDto } from './dto/onboarding.dto';
 export declare class AuthController {
     private readonly authService;
     constructor(authService: AuthService);
@@ -24,6 +25,14 @@ export declare class AuthController {
         success: boolean;
         message: string;
         data: {
+            emailSent: boolean;
+        };
+    }>;
+    onboarding(user: any, onboardingDto: OnboardingDto): Promise<{
+        success: boolean;
+        message: string;
+        data: {
+            workspaceId: any;
             emailSent: boolean;
         };
     }>;

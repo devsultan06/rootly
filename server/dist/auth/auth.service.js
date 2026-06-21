@@ -170,6 +170,58 @@ let AuthService = AuthService_1 = class AuthService {
             },
         };
     }
+    async completeOnboarding(user, dto) {
+        const userId = user.sub || user.id;
+        const email = user.email;
+        const fullName = dto.fullName || user.user_metadata?.full_name || 'New Developer';
+        this.logger.log(`Completing onboarding for user ${userId} (${email}) with company ${dto.companyName}`);
+        const adminClient = this.supabaseService.getAdminClient();
+        const { error: profileError } = await adminClient
+            .from('profiles')
+            .update({ full_name: fullName })
+            .eq('id', userId);
+        if (profileError) {
+            this.logger.error(`Failed to update profile for onboarding: ${profileError.message}`);
+            throw new common_1.InternalServerErrorException(`Profile update failed: ${profileError.message}`);
+        }
+        const { data: workspaceData, error: workspaceError } = await adminClient
+            .from('workspaces')
+            .insert({ name: dto.companyName })
+            .select('id')
+            .single();
+        if (workspaceError) {
+            this.logger.error(`Failed to create workspace in onboarding: ${workspaceError.message}`);
+            throw new common_1.InternalServerErrorException(`Workspace creation failed: ${workspaceError.message}`);
+        }
+        const workspaceId = workspaceData.id;
+        const { error: memberError } = await adminClient
+            .from('workspace_members')
+            .insert({
+            workspace_id: workspaceId,
+            profile_id: userId,
+            role: 'Admin',
+            status: 'active',
+        });
+        if (memberError) {
+            this.logger.error(`Failed to link member to workspace: ${memberError.message}`);
+            throw new common_1.InternalServerErrorException(`Workspace member linking failed: ${memberError.message}`);
+        }
+        let emailSent = false;
+        try {
+            emailSent = await this.emailService.sendWelcomeEmail(email, fullName);
+        }
+        catch (err) {
+            this.logger.error(`Failed to send onboarding welcome email: ${err.message}`);
+        }
+        return {
+            success: true,
+            message: 'Onboarding completed successfully.',
+            data: {
+                workspaceId,
+                emailSent,
+            },
+        };
+    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = AuthService_1 = __decorate([

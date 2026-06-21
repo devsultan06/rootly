@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { DashboardIcons } from "./components/DashboardIcons";
+import { supabase } from "../../lib/supabase";
 
 const NAV_ITEMS = [
   { label: "Overview", href: "/dashboard", icon: DashboardIcons.home },
@@ -59,13 +60,80 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [aiActionsOpen, setAiActionsOpen] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState("Developer");
+  const [userEmail, setUserEmail] = useState("");
+
+  useEffect(() => {
+    const checkUserAndWorkspace = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          router.push("/login");
+          return;
+        }
+
+        // Set user info
+        const email = session.user.email || "";
+        const fullName = session.user.user_metadata?.full_name || "Developer";
+        setUserEmail(email);
+        setUserName(fullName);
+
+        // Check if user has workspace
+        const { data: memberData, error } = await supabase
+          .from("workspace_members")
+          .select("workspace_id")
+          .eq("profile_id", session.user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Error checking workspace membership:", error);
+        }
+
+        if (!memberData) {
+          // No workspace member record found, they need onboarding!
+          router.push("/onboarding");
+          return;
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.error("Auth check failed:", err);
+        router.push("/login");
+      }
+    };
+
+    checkUserAndWorkspace();
+  }, [router]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
 
   const isActive = (href: string) =>
     href === "/dashboard"
       ? pathname === "/dashboard"
       : pathname.startsWith(href);
+
+  const initials = userName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "DV";
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center font-sans">
+        <div className="w-12 h-12 border-4 border-[#14B8A6]/20 border-t-[#14B8A6] rounded-full animate-spin mb-4"></div>
+        <p className="text-xs text-muted font-medium">Securing workspace session...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground flex">
@@ -160,23 +228,23 @@ export default function DashboardLayout({
         <div className="border-t border-border p-4 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-accent/20 border border-accent-border flex items-center justify-center text-accent text-xs font-bold flex-shrink-0">
-              SC
+              {initials}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-foreground truncate">
-                Sultan C.
+                {userName}
               </p>
               <p className="text-[11px] text-muted-dark truncate">
-                sultan@rootly.io
+                {userEmail}
               </p>
             </div>
-            <Link
-              href="/"
-              className="text-muted-dark hover:text-foreground transition-colors flex-shrink-0"
+            <button
+              onClick={handleSignOut}
+              className="text-muted-dark hover:text-foreground transition-colors flex-shrink-0 bg-transparent border-none p-1 cursor-pointer outline-none flex items-center justify-center"
               title="Sign out"
             >
               {DashboardIcons.logout}
-            </Link>
+            </button>
           </div>
         </div>
       </aside>

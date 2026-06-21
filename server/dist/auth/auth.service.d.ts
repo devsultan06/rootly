@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { EmailService } from '../email/email.service';
 import { SignUpDto } from './dto/signup.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { OnboardingDto } from './dto/onboarding.dto';
 export declare class AuthService {
     private readonly supabaseService;
     private readonly configService;
@@ -36,6 +37,14 @@ export declare class AuthService {
         success: boolean;
         message: string;
         data: {
+            emailSent: boolean;
+        };
+    }>;
+    completeOnboarding(user: any, dto: OnboardingDto): Promise<{
+        success: boolean;
+        message: string;
+        data: {
+            workspaceId: any;
             emailSent: boolean;
         };
     }>;

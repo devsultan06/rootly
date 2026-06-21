@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { EmailService } from '../email/email.service';
 import { SignUpDto } from './dto/signup.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { OnboardingDto } from './dto/onboarding.dto';
 
 @Injectable()
 export class AuthService {
@@ -235,6 +236,73 @@ export class AuthService {
       success: true,
       message: 'Welcome email sent successfully.',
       data: {
+        emailSent,
+      },
+    };
+  }
+
+  async completeOnboarding(user: any, dto: OnboardingDto) {
+    const userId = user.sub || user.id;
+    const email = user.email;
+    const fullName = dto.fullName || user.user_metadata?.full_name || 'New Developer';
+    
+    this.logger.log(`Completing onboarding for user ${userId} (${email}) with company ${dto.companyName}`);
+    
+    const adminClient = this.supabaseService.getAdminClient();
+
+    // 1. Update profile full name if specified
+    const { error: profileError } = await adminClient
+      .from('profiles')
+      .update({ full_name: fullName })
+      .eq('id', userId);
+
+    if (profileError) {
+      this.logger.error(`Failed to update profile for onboarding: ${profileError.message}`);
+      throw new InternalServerErrorException(`Profile update failed: ${profileError.message}`);
+    }
+
+    // 2. Create the workspace
+    const { data: workspaceData, error: workspaceError } = await adminClient
+      .from('workspaces')
+      .insert({ name: dto.companyName })
+      .select('id')
+      .single();
+
+    if (workspaceError) {
+      this.logger.error(`Failed to create workspace in onboarding: ${workspaceError.message}`);
+      throw new InternalServerErrorException(`Workspace creation failed: ${workspaceError.message}`);
+    }
+
+    const workspaceId = workspaceData.id;
+
+    // 3. Link user as Admin to the workspace
+    const { error: memberError } = await adminClient
+      .from('workspace_members')
+      .insert({
+        workspace_id: workspaceId,
+        profile_id: userId,
+        role: 'Admin',
+        status: 'active',
+      });
+
+    if (memberError) {
+      this.logger.error(`Failed to link member to workspace: ${memberError.message}`);
+      throw new InternalServerErrorException(`Workspace member linking failed: ${memberError.message}`);
+    }
+
+    // 4. Send welcome onboarding email
+    let emailSent = false;
+    try {
+      emailSent = await this.emailService.sendWelcomeEmail(email, fullName);
+    } catch (err: any) {
+      this.logger.error(`Failed to send onboarding welcome email: ${err.message}`);
+    }
+
+    return {
+      success: true,
+      message: 'Onboarding completed successfully.',
+      data: {
+        workspaceId,
         emailSent,
       },
     };
