@@ -48,6 +48,10 @@ CREATE POLICY "Allow workspace members to view workspace details" ON public.work
         )
     );
 
+CREATE POLICY "Allow users to view their own workspace memberships" ON public.workspace_members
+    FOR SELECT USING (auth.uid() = profile_id);
+
+
 -- ── SUPABASE AUTH TRIGGER ──
 -- Automate profile creation on User Registration
 CREATE OR REPLACE FUNCTION public.handle_new_user()

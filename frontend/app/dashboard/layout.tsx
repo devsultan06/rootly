@@ -86,14 +86,13 @@ export default function DashboardLayout({
         const { data: memberData, error } = await supabase
           .from("workspace_members")
           .select("workspace_id")
-          .eq("profile_id", session.user.id)
-          .maybeSingle();
+          .eq("profile_id", session.user.id);
 
         if (error) {
           console.error("Error checking workspace membership:", error);
         }
 
-        if (!memberData) {
+        if (!memberData || memberData.length === 0) {
           // No workspace member record found, they need onboarding!
           router.push("/onboarding");
           return;

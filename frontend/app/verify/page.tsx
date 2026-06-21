@@ -89,7 +89,7 @@ function VerifyContent() {
               </svg>
             </div>
             <h2 className="text-xl font-medium tracking-tight text-white mb-3">Verification successful!</h2>
-            <p className="text-xs text-[#14B8A6] font-medium animate-pulse mb-6">
+            <p className="text-xs text-[#14B8A6] font-medium mb-6">
               Access granted. Redirecting to your dashboard...
             </p>
             <div className="w-full bg-[#161616] rounded-full h-1 overflow-hidden border border-white/[0.02]">

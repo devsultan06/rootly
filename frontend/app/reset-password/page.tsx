@@ -141,7 +141,7 @@ function ResetPasswordContent() {
                   </svg>
                 </div>
                 <h2 className="text-xl font-medium tracking-tight text-white mb-3">Password reset success!</h2>
-                <p className="text-xs text-[#14B8A6] font-medium mb-6 animate-pulse">
+                <p className="text-xs text-[#14B8A6] font-medium mb-6">
                   {successMessage} Redirecting to login page...
                 </p>
                 <div className="w-full bg-[#161616] rounded-full h-1 overflow-hidden border border-white/[0.02]">

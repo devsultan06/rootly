@@ -30,10 +30,9 @@ export default function OnboardingPage() {
         const { data: memberData } = await supabase
           .from("workspace_members")
           .select("workspace_id")
-          .eq("profile_id", session.user.id)
-          .maybeSingle();
+          .eq("profile_id", session.user.id);
 
-        if (memberData) {
+        if (memberData && memberData.length > 0) {
           // Already has a workspace, redirect straight to dashboard
           router.push("/dashboard");
           return;
